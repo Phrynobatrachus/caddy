@@ -15,6 +15,7 @@
 package caddy
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"encoding/hex"
@@ -668,6 +669,85 @@ func Validate(cfg *Config) error {
 		cfg.cancelFunc() // call Cleanup on all modules
 	}
 	return err
+}
+
+// ExportStorage calls List() and Load() on the configured
+// storage module and returns the underlying assets. 
+func ExportStorage(cfg *Config) (files []struct{
+	Name string
+	Body []byte
+}, err error) {
+	ctx, err := run(cfg, false)
+	if err != nil {
+		return nil, err
+	}
+	
+	defer cfg.cancelFunc()
+	stor := ctx.Storage()
+	keys, err := stor.List(ctx, "", true)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, k := range keys {
+		info, err := stor.Stat(ctx, k)
+		if err != nil {
+			return nil, err
+		}
+
+		if info.IsTerminal {
+			v, err := stor.Load(ctx, k)
+			if err != nil {
+				return nil, err
+			}
+
+			file := struct{
+				Name string
+				Body []byte
+			}{
+				Name: k,
+				Body: v,
+			}
+
+			files = append(files, file)
+		}
+	}
+
+	return files, nil
+}
+
+// ImportStorage unpacks an archive of assets into the 
+// configured storage with Store().
+func ImportStorage(cfg *Config, input []byte) error {
+	ctx, err := run(cfg, false)
+	if err != nil {
+		return err
+	}
+
+	defer cfg.cancelFunc()
+	stor := ctx.Storage()
+	tr := tar.NewReader(bytes.NewReader(input))
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		b, err := io.ReadAll(tr)
+		if err != nil {
+			return err
+		}
+
+		err = stor.Store(ctx, hdr.Name, b)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // exitProcess exits the process as gracefully as possible,

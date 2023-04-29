@@ -305,6 +305,50 @@ the KEY=VALUE format will be loaded into the Caddy process.
 		},
 	})
 
+  RegisterCommand(Command{
+		Name:  "storage-export",
+		Usage: "--config <path> [--output <path>] [--user <name>]",
+		Short: "Exports storage assets as a tarball",
+		Long: `
+The contents of the configured storage module (TLS certificates, autosave.json, etc) 
+are exported via a tarball.
+
+An output file can be set with --output, otherwise the archive is written to stdout.
+
+If Caddy is running under its own user (e.g. as a systemd service), pass their 
+name with --user. This is only needed when using the default file_system storage,
+and has no effect otherwise. 
+`,
+		CobraFunc: func(cmd *cobra.Command) {
+			cmd.Flags().StringP("config", "c", "", "Input configuration file (required)")
+			cmd.Flags().StringP("output", "o", "", "Output path")
+			cmd.Flags().StringP("user", "u", "", "User to run the command as") 
+			cmd.RunE = WrapCommandFuncForCobra(cmdExportStorage)
+		},
+	})
+
+  RegisterCommand(Command{
+		Name:  "storage-import",
+		Usage: "--config <path> [--user <name>] <path>",
+		Short: "Imports storage assets from a tarball.",
+		Long: `
+Imports storage assets to the configured storage module. The import file must be
+a tar archive.
+
+If you wish you use stdin instead of a regular file, use - as the path.
+
+If Caddy is running under its own user (e.g. as a systemd service), pass their name with
+--user. This is only needed when using the default file_system storage, and has no effect
+otherwise.
+`,
+		CobraFunc: func(cmd *cobra.Command) {
+			cmd.Flags().StringP("config", "c", "", "Input configuration file (required)")
+			cmd.Flags().StringP("user", "u", "", "User to run the command as")
+			cmd.RunE = WrapCommandFuncForCobra(cmdImportStorage)
+		},
+	})
+
+
 	RegisterCommand(Command{
 		Name:  "fmt",
 		Usage: "[--overwrite] [--diff] [<path>]",
