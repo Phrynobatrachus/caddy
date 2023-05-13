@@ -305,7 +305,7 @@ the KEY=VALUE format will be loaded into the Caddy process.
 		},
 	})
 
-  RegisterCommand(Command{
+	RegisterCommand(Command{
 		Name:  "storage-export",
 		Usage: "--config <path> [--output <path>] [--user <name>]",
 		Short: "Exports storage assets as a tarball",
@@ -322,12 +322,12 @@ and has no effect otherwise.
 		CobraFunc: func(cmd *cobra.Command) {
 			cmd.Flags().StringP("config", "c", "", "Input configuration file (required)")
 			cmd.Flags().StringP("output", "o", "", "Output path")
-			cmd.Flags().StringP("user", "u", "", "User to run the command as") 
+			cmd.Flags().StringP("user", "u", "", "User to run the command as")
 			cmd.RunE = WrapCommandFuncForCobra(cmdExportStorage)
 		},
 	})
 
-  RegisterCommand(Command{
+	RegisterCommand(Command{
 		Name:  "storage-import",
 		Usage: "--config <path> [--user <name>] <path>",
 		Short: "Imports storage assets from a tarball.",
@@ -347,7 +347,6 @@ otherwise.
 			cmd.RunE = WrapCommandFuncForCobra(cmdImportStorage)
 		},
 	})
-
 
 	RegisterCommand(Command{
 		Name:  "fmt",

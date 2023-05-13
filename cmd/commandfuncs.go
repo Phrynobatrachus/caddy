@@ -16,7 +16,7 @@ package caddycmd
 
 import (
 	"archive/tar"
-    	"bytes"
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -545,28 +545,28 @@ func cmdValidateConfig(fl Flags) (int, error) {
 func cmdImportStorage(fl Flags) (int, error) {
 	importStorageCmdConfigFlag := fl.String("config")
 	importStorageCmdUserFlag := fl.String("user")
-  	importStorageCmdImportFile := fl.Arg(0)
-	
+	importStorageCmdImportFile := fl.Arg(0)
+
 	// re-run similarly to export here?
 	if importStorageCmdUserFlag != "" {
 	}
 
-  	config, _, err := LoadConfig(importStorageCmdConfigFlag, "")
-  	if err != nil {
-    		return caddy.ExitCodeFailedStartup, err
-  	}
-  	config = caddy.RemoveMetaFields(config)
+	config, _, err := LoadConfig(importStorageCmdConfigFlag, "")
+	if err != nil {
+		return caddy.ExitCodeFailedStartup, err
+	}
+	config = caddy.RemoveMetaFields(config)
 
-  	var cfg *caddy.Config
-  	err = caddy.StrictUnmarshalJSON(config, &cfg)
-  	if err != nil {
-    		return caddy.ExitCodeFailedStartup, err
-  	}
+	var cfg *caddy.Config
+	err = caddy.StrictUnmarshalJSON(config, &cfg)
+	if err != nil {
+		return caddy.ExitCodeFailedStartup, err
+	}
 
 	var input []byte
 
-  	// as a special case, read from stdin if the file name is "-"
-  	if importStorageCmdImportFile == "-" {
+	// as a special case, read from stdin if the file name is "-"
+	if importStorageCmdImportFile == "-" {
 		input, err = io.ReadAll(os.Stdin)
 		if err != nil {
 			return caddy.ExitCodeFailedStartup, fmt.Errorf("reading stdin: %v", err)
@@ -578,25 +578,25 @@ func cmdImportStorage(fl Flags) (int, error) {
 		}
 	}
 
-  	err = caddy.ImportStorage(cfg, input)
+	err = caddy.ImportStorage(cfg, input)
 	if err != nil {
 		return caddy.ExitCodeFailedQuit, fmt.Errorf("importing storage: %v", err)
 	}
-	
+
 	fmt.Println("Successfully imported storage")
-  	return caddy.ExitCodeSuccess, nil
+	return caddy.ExitCodeSuccess, nil
 }
 
 func cmdExportStorage(fl Flags) (int, error) {
-  	exportStorageCmdConfigFlag := fl.String("config")
+	exportStorageCmdConfigFlag := fl.String("config")
 	exportStorageCmdOutputFlag := fl.String("output")
 	exportStorageCmdUserFlag := fl.String("user")
-	
+
 	var isFsStorage bool
 	standard, _, _, err := getModules()
 	if err != nil {
 		return caddy.ExitCodeFailedStartup, err
-	}	
+	}
 
 	for _, mod := range standard {
 		if mod.caddyModuleID == "caddy.storage.file_system" {
@@ -606,7 +606,7 @@ func cmdExportStorage(fl Flags) (int, error) {
 
 	u, err := user.Current()
 	if err != nil {
-		return caddy.ExitCodeFailedStartup, err 
+		return caddy.ExitCodeFailedStartup, err
 	}
 
 	// re-run command as the given user
@@ -616,16 +616,16 @@ func cmdExportStorage(fl Flags) (int, error) {
 	if exportStorageCmdUserFlag != "" && isFsStorage && u.Username != exportStorageCmdUserFlag {
 		u, err = user.Lookup(exportStorageCmdUserFlag)
 		if err != nil {
-			return caddy.ExitCodeFailedStartup, err 
+			return caddy.ExitCodeFailedStartup, err
 		}
 
 		uid, err := strconv.Atoi(u.Uid)
 		if err != nil {
-			return caddy.ExitCodeFailedStartup, err 
+			return caddy.ExitCodeFailedStartup, err
 		}
-		gid, err := strconv.Atoi(u.Gid) 
+		gid, err := strconv.Atoi(u.Gid)
 		if err != nil {
-			return caddy.ExitCodeFailedStartup, err 
+			return caddy.ExitCodeFailedStartup, err
 		}
 
 		cmd := exec.Command("caddy", "storage-export", "--config", exportStorageCmdConfigFlag)
@@ -635,29 +635,29 @@ func cmdExportStorage(fl Flags) (int, error) {
 				return caddy.ExitCodeFailedStartup, err
 			}
 			defer f.Close()
-		
+
 			cmd.Stdout = f
 		} else {
 			cmd.Stdout = os.Stdout
 		}
 		cmd.Stderr = os.Stderr
-		cmd.Env = []string{fmt.Sprint("HOME=", u.HomeDir)} 
+		cmd.Env = []string{fmt.Sprint("HOME=", u.HomeDir)}
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Credential: &syscall.Credential{
-				Uid: uint32(uid), 
-				Gid: uint32(gid),
-				NoSetGroups: true, 
+				Uid:         uint32(uid),
+				Gid:         uint32(gid),
+				NoSetGroups: true,
 			},
 		}
 		err = cmd.Run()
 		if err != nil {
 			return caddy.ExitCodeFailedQuit, err
 		}
-		
+
 		return caddy.ExitCodeSuccess, nil
 	}
-	
-  	input, _, err := LoadConfig(exportStorageCmdConfigFlag, "")
+
+	input, _, err := LoadConfig(exportStorageCmdConfigFlag, "")
 	if err != nil {
 		return caddy.ExitCodeFailedStartup, err
 	}
@@ -669,33 +669,33 @@ func cmdExportStorage(fl Flags) (int, error) {
 	if err != nil {
 		return caddy.ExitCodeFailedStartup, fmt.Errorf("decoding config: %v", err)
 	}
-	
-	// get assets
-  	files, err := caddy.ExportStorage(cfg)
-  	if err != nil {
-    		return caddy.ExitCodeFailedQuit, fmt.Errorf("exporting storage: %v", err)
-	}
-	
-	// make the archive 
-	var buf bytes.Buffer
-  	tw := tar.NewWriter(&buf)
 
-  	for _, file := range files {
-    		hdr := &tar.Header{
-      			Name: file.Name,
-      			Mode: 0600,
-      			Size: int64(len(file.Body)),
-    		}
-    		if err = tw.WriteHeader(hdr); err != nil {
-      			return caddy.ExitCodeFailedQuit, fmt.Errorf("creating archive: %v", err)
-    		}
-    		if _, err = tw.Write(file.Body); err != nil {
-      			return caddy.ExitCodeFailedQuit, fmt.Errorf("creating archive: %v", err)
-    		}
+	// get assets
+	files, err := caddy.ExportStorage(cfg)
+	if err != nil {
+		return caddy.ExitCodeFailedQuit, fmt.Errorf("exporting storage: %v", err)
 	}
-  	if err = tw.Close(); err != nil {
-    		return caddy.ExitCodeFailedQuit, fmt.Errorf("creating archive: %v", err)
-  	} 
+
+	// make the archive
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+
+	for _, file := range files {
+		hdr := &tar.Header{
+			Name: file.Name,
+			Mode: 0600,
+			Size: int64(len(file.Body)),
+		}
+		if err = tw.WriteHeader(hdr); err != nil {
+			return caddy.ExitCodeFailedQuit, fmt.Errorf("creating archive: %v", err)
+		}
+		if _, err = tw.Write(file.Body); err != nil {
+			return caddy.ExitCodeFailedQuit, fmt.Errorf("creating archive: %v", err)
+		}
+	}
+	if err = tw.Close(); err != nil {
+		return caddy.ExitCodeFailedQuit, fmt.Errorf("creating archive: %v", err)
+	}
 
 	if exportStorageCmdOutputFlag != "" {
 		f, err := os.Create(exportStorageCmdOutputFlag)
@@ -703,7 +703,7 @@ func cmdExportStorage(fl Flags) (int, error) {
 			return caddy.ExitCodeFailedQuit, err
 		}
 		defer f.Close()
-		
+
 		_, err = f.Write(buf.Bytes())
 		if err != nil {
 			return caddy.ExitCodeFailedQuit, err
@@ -714,7 +714,7 @@ func cmdExportStorage(fl Flags) (int, error) {
 			return caddy.ExitCodeFailedQuit, fmt.Errorf("writing archive: %v", err)
 		}
 	}
-	
+
 	fmt.Println("Storage exported successfully")
 	return caddy.ExitCodeSuccess, nil
 }

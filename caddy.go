@@ -672,8 +672,8 @@ func Validate(cfg *Config) error {
 }
 
 // ExportStorage calls List() and Load() on the configured
-// storage module and returns the underlying assets. 
-func ExportStorage(cfg *Config) (files []struct{
+// storage module and returns the underlying assets.
+func ExportStorage(cfg *Config) (files []struct {
 	Name string
 	Body []byte
 }, err error) {
@@ -681,7 +681,7 @@ func ExportStorage(cfg *Config) (files []struct{
 	if err != nil {
 		return nil, err
 	}
-	
+
 	defer cfg.cancelFunc()
 	stor := ctx.Storage()
 	keys, err := stor.List(ctx, "", true)
@@ -701,7 +701,7 @@ func ExportStorage(cfg *Config) (files []struct{
 				return nil, err
 			}
 
-			file := struct{
+			file := struct {
 				Name string
 				Body []byte
 			}{
@@ -716,7 +716,7 @@ func ExportStorage(cfg *Config) (files []struct{
 	return files, nil
 }
 
-// ImportStorage unpacks an archive of assets into the 
+// ImportStorage unpacks an archive of assets into the
 // configured storage with Store().
 func ImportStorage(cfg *Config, input []byte) error {
 	ctx, err := run(cfg, false)
