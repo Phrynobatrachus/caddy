@@ -313,42 +313,33 @@ Allows exporting and importing Caddy's storage contents.
 `,
 		CobraFunc: func(cmd *cobra.Command) {
 			exportCmd := &cobra.Command{
-				Use:   "export [--config <path>] [--output <path>] [--user <name>]",
+				Use:   "export --config <path> --output <path>",
 				Short: "Exports storage assets as a tarball",
 				Long: `
 The contents of the configured storage module (TLS certificates, autosave.json, etc) 
 are exported via a tarball.
 
-An output file can be set with --output, otherwise the archive is written to stdout.
-
-If Caddy is running under its own user (e.g. as a systemd service), pass their 
-name with --user. This is only needed when using the default file_system storage,
-and has no effect otherwise. 
+--output is required, - can be given for stdout. 
 `,
 				RunE: WrapCommandFuncForCobra(cmdExportStorage),
 			}
 			exportCmd.Flags().StringP("config", "c", "", "Input configuration file (required)")
 			exportCmd.Flags().StringP("output", "o", "", "Output path")
-			exportCmd.Flags().StringP("user", "u", "", "User to run the command as")
 			cmd.AddCommand(exportCmd)
 
 			importCmd := &cobra.Command{
-				Use:   "import [--config <path>] [--user <name>]",
+				Use:   "import --config <path> --input <path>",
 				Short: "Imports storage assets from a tarball.",
 				Long: `
 Imports storage assets to the configured storage module. The import file must be
 a tar archive.
 
-If you wish you use stdin instead of a regular file, use - as the path.
-
-If Caddy is running under its own user (e.g. as a systemd service), pass their name with
---user. This is only needed when using the default file_system storage, and has no effect
-otherwise.
+--input is required, - can be given for stdin.
 `,
 				RunE: WrapCommandFuncForCobra(cmdImportStorage),
 			}
-			importCmd.Flags().StringP("config", "c", "", "Input configuration file (required)")
-			importCmd.Flags().StringP("user", "u", "", "User to run the command as")
+			importCmd.Flags().StringP("config", "c", "", "Configuration file to load (required)")
+			importCmd.Flags().StringP("input", "i", "", "Tar of assets to load (required)")
 			cmd.AddCommand(importCmd)
 		},
 	})
